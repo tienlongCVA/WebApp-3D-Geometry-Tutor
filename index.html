@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Mô hình 3D - Neon Dimension</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #000;
+      color: white;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+    #info {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: rgba(20, 20, 20, 0.85);
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #444;
+      width: 260px;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+    }
+    label { display: block; margin-top: 6px; }
+    input, select {
+      width: 100%;
+      margin-top: 4px;
+      padding: 6px;
+      border-radius: 5px;
+      border: none;
+      background: #222;
+      color: white;
+      font-size: 13px;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 45px;
+      height: 24px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #555;
+      transition: 0.3s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #00aaff;
+      box-shadow: 0 0 10px #00aaff;
+    }
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+    #output {
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">
+    <h3>💠 Mô hình 3D</h3>
+    <label>Chọn hình:</label>
+    <select id="shape">
+      <option value="box">Hộp chữ nhật</option>
+    </select>
+    <label>Cạnh a:</label><input type="number" id="a" value="3" step="0.1">
+    <label>Cạnh b:</label><input type="number" id="b" value="4" step="0.1">
+    <label>Chiều cao (c):</label><input type="number" id="c" value="5" step="0.1">
+    <br><br>
+    <label>🔢 Hiện kích thước:
+      <label class="switch">
+        <input type="checkbox" id="dimToggle" onchange="toggleDimensions()">
+        <span class="slider"></span>
+      </label>
+    </label>
+    <label>💡 Chỉ hiển thị cạnh:
+      <label class="switch">
+        <input type="checkbox" id="wireToggle" onchange="toggleWireframe()">
+        <span class="slider"></span>
+      </label>
+    </label>
+    <button style="margin-top:10px;width:100%;padding:7px;background:#00aaff;color:white;border:none;border-radius:5px;cursor:pointer;" onclick="drawShape()">Vẽ & Tính toán</button>
+    <div id="output"></div>
+  </div>
+
+  <!-- Three.js -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.125.2/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.125.2/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    let scene, camera, renderer, controls;
+    let mesh, dimensionGroup, wireframeMesh;
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+    camera.position.set(6, 6, 8);
+    renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+    const light = new THREE.PointLight(0xffffff, 1);
+    light.position.set(10,10,10);
+    scene.add(ambient, light);
+
+    const grid = new THREE.GridHelper(20, 20, 0x333333, 0x111111);
+    scene.add(grid);
+
+    function drawShape() {
+      const a = parseFloat(document.getElementById("a").value);
+      const b = parseFloat(document.getElementById("b").value);
+      const c = parseFloat(document.getElementById("c").value);
+
+      if (mesh) scene.remove(mesh);
+      if (wireframeMesh) scene.remove(wireframeMesh);
+      if (dimensionGroup) scene.remove(dimensionGroup);
+
+      const geo = new THREE.BoxGeometry(a, c, b);
+      const mat = new THREE.MeshStandardMaterial({
+        color: 0x00aaff,
+        roughness: 0.4,
+        metalness: 0.2,
+        opacity: 0.9,
+        transparent: true
+      });
+
+      mesh = new THREE.Mesh(geo, mat);
+      mesh.position.y = c / 2;
+      scene.add(mesh);
+
+      const sxq = 2 * c * (a + b);
+      const stp = 2 * (a*b + a*c + b*c);
+      const v = a * b * c;
+      document.getElementById("output").innerHTML = `
+        <b>Kết quả:</b><br>
+        Diện tích xung quanh: ${sxq.toFixed(2)}<br>
+        Diện tích toàn phần: ${stp.toFixed(2)}<br>
+        Thể tích: ${v.toFixed(2)}
+      `;
+    }
+
+    // === Tạo text neon ===
+    function makeTextSprite(message, parameters) {
+      const fontface = parameters.fontface || "Arial";
+      const fontsize = parameters.fontsize || 120; // chữ lớn
+      const color = parameters.color || "#00ffff";
+      const glow = parameters.glow || "#00ffff";
+
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      context.font = `${fontsize}px ${fontface}`;
+      context.shadowColor = glow;
+      context.shadowBlur = 20;
+      context.fillStyle = color;
+      context.fillText(message, 0, fontsize);
+
+      const texture = new THREE.Texture(canvas);
+      texture.needsUpdate = true;
+      const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
+      const sprite = new THREE.Sprite(spriteMaterial);
+      sprite.scale.set(1.2, 0.6, 1); // tăng kích thước hiển thị
+      return sprite;
+    }
+
+    function createDimensionLine(start, end, label) {
+      const dir = new THREE.Vector3().subVectors(end, start);
+      const length = dir.length();
+      dir.normalize();
+
+      const arrow1 = new THREE.ArrowHelper(dir, start, length, 0xff0033, 0.3, 0.2);
+      const arrow2 = new THREE.ArrowHelper(dir.clone().negate(), end, length, 0xff0033, 0.3, 0.2);
+
+      const line = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([start, end]),
+        new THREE.LineBasicMaterial({ color: 0xff0033 })
+      );
+
+      const textSprite = makeTextSprite(`${label.toFixed(2)}`, { fontsize: 120, color: "#ffffff", glow: "#ffffff" });
+      textSprite.position.copy(start.clone().add(end).multiplyScalar(0.5));
+      textSprite.position.y += 0.6;
+
+      const group = new THREE.Group();
+      group.add(line, arrow1, arrow2, textSprite);
+      return group;
+    }
+
+    function toggleDimensions() {
+      const toggle = document.getElementById("dimToggle").checked;
+      if (!mesh) return;
+      if (dimensionGroup) scene.remove(dimensionGroup);
+
+      if (toggle) {
+        const a = parseFloat(document.getElementById("a").value);
+        const b = parseFloat(document.getElementById("b").value);
+        const c = parseFloat(document.getElementById("c").value);
+
+        dimensionGroup = new THREE.Group();
+        const ha = a/2, hb = b/2, hc = c/2;
+
+        const dimA = createDimensionLine(
+          new THREE.Vector3(-ha, 0, hb),
+          new THREE.Vector3(ha, 0, hb),
+          a
+        );
+        const dimB = createDimensionLine(
+          new THREE.Vector3(ha+0.3, 0, -hb),
+          new THREE.Vector3(ha+0.3, 0, hb),
+          b
+        );
+        const dimC = createDimensionLine(
+          new THREE.Vector3(-ha-0.3, 0, -hb),
+          new THREE.Vector3(-ha-0.3, c, -hb),
+          c
+        );
+
+        dimensionGroup.add(dimA, dimB, dimC);
+        scene.add(dimensionGroup);
+      }
+    }
+
+    function toggleWireframe() {
+      const toggle = document.getElementById("wireToggle").checked;
+      if (!mesh) return;
+
+      if (toggle) {
+        const geo = mesh.geometry;
+        const edges = new THREE.EdgesGeometry(geo);
+        const mat = new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2 });
+        wireframeMesh = new THREE.LineSegments(edges, mat);
+        wireframeMesh.position.copy(mesh.position);
+        scene.add(wireframeMesh);
+        mesh.visible = false;
+      } else {
+        scene.remove(wireframeMesh);
+        mesh.visible = true;
+      }
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
