@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Chat - Hỗ trợ Hình học</title>
+  <style>
+    body {
+      margin: 0;
+      background: radial-gradient(circle at center, #000010, #000);
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    header {
+      background: rgba(0, 255, 255, 0.1);
+      border-bottom: 1px solid #00ffff44;
+      text-align: center;
+      padding: 12px;
+      font-size: 20px;
+      letter-spacing: 1px;
+      color: #00ffff;
+      text-shadow: 0 0 10px #00ffff;
+    }
+
+    #chatbox {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .msg {
+      max-width: 70%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.4;
+      box-shadow: 0 0 10px rgba(0,255,255,0.15);
+      animation: fadeIn 0.2s ease-in;
+    }
+
+    .user {
+      align-self: flex-end;
+      background: #0066ff;
+      color: white;
+      box-shadow: 0 0 10px #0066ff;
+    }
+
+    .ai {
+      align-self: flex-start;
+      background: #111;
+      border: 1px solid #00ffff55;
+      color: #00ffff;
+      box-shadow: 0 0 10px #00ffff33;
+    }
+
+    #inputArea {
+      display: flex;
+      padding: 12px;
+      background: rgba(0,0,0,0.8);
+      border-top: 1px solid #00ffff33;
+    }
+
+    #inputArea input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      outline: none;
+      border-radius: 8px;
+      background: #111;
+      color: white;
+      font-size: 14px;
+      box-shadow: inset 0 0 5px #00ffff55;
+    }
+
+    #inputArea button {
+      margin-left: 10px;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      background: #00ffff;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 10px #00ffff;
+      transition: 0.2s;
+    }
+
+    #inputArea button:hover {
+      background: #00aaff;
+      box-shadow: 0 0 15px #00aaff;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .back-btn {
+      position: absolute;
+      top: 10px;
+      left: 15px;
+      background: none;
+      border: 1px solid #00ffff55;
+      color: #00ffff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: 0.2s;
+    }
+
+    .back-btn:hover {
+      background: #00ffff22;
+      box-shadow: 0 0 8px #00ffff;
+    }
+  </style>
+</head>
+<body>
+  <button class="back-btn" onclick="window.location.href='index.html'">⮜ Quay lại 3D</button>
+  <header>💬 Chat với AI Hình học</header>
+
+  <div id="chatbox">
+    <div class="msg ai">Xin chào 👋! Tôi là trợ lý AI giúp bạn học hình học không gian. Bạn có thể hỏi về công thức, cách tính diện tích, thể tích, hoặc các tính chất của hình học.</div>
+  </div>
+
+  <div id="inputArea">
+    <input id="userInput" placeholder="Nhập câu hỏi của bạn...">
+    <button onclick="sendMessage()">Gửi</button>
+  </div>
+
+  <script>
+    const chatbox = document.getElementById('chatbox');
+    const input = document.getElementById('userInput');
+
+    function sendMessage() {
+      const text = input.value.trim();
+      if (!text) return;
+
+      const userMsg = document.createElement('div');
+      userMsg.className = 'msg user';
+      userMsg.textContent = text;
+      chatbox.appendChild(userMsg);
+      chatbox.scrollTop = chatbox.scrollHeight;
+      input.value = '';
+
+      setTimeout(() => {
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'msg ai';
+        aiMsg.textContent = getAIResponse(text);
+        chatbox.appendChild(aiMsg);
+        chatbox.scrollTop = chatbox.scrollHeight;
+      }, 600);
+    }
+
+    function getAIResponse(q) {
+      q = q.toLowerCase();
+      if (q.includes("hình hộp") || q.includes("hộp chữ nhật"))
+        return "Diện tích toàn phần S = 2(ab + bc + ca), thể tích V = a × b × c.";
+      if (q.includes("hình cầu"))
+        return "Diện tích S = 4πr² và thể tích V = ⁴⁄₃πr³.";
+      if (q.includes("hình trụ"))
+        return "Diện tích xung quanh Sxq = 2πrh, toàn phần Stp = 2πr(h + r), thể tích V = πr²h.";
+      if (q.includes("hình chóp"))
+        return "Thể tích hình chóp: V = ⅓ × diện tích đáy × chiều cao.";
+      if (q.includes("hình lăng trụ"))
+        return "Thể tích hình lăng trụ: V = diện tích đáy × chiều cao.";
+      if (q.includes("chào"))
+        return "Chào bạn, mình có thể giúp gì cho bạn!";
+      return "Chịu, bố ai mà biết được";
+    }
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+  </script>
+</body>
+</html>
